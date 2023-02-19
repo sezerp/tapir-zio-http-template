@@ -1,11 +1,12 @@
 package com.pawelzabczynski
 
+import com.pawelzabczynski.config.Config
 import com.pawelzabczynski.http.{Http, HttpApi, HttpConfig}
-import com.pawelzabczynski.infrastructure.ZIOLogger
+import com.pawelzabczynski.infrastructure.{Db, DbConfig, ZIOLogger}
 import com.pawelzabczynski.user.UserApi
 import com.typesafe.scalalogging.StrictLogging
-import zio.{Scope, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
-import zio.interop.catz._
+import doobie.hikari.HikariTransactor
+import zio.{Scope, Task, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
 
 object Application extends ZIOAppDefault with StrictLogging {
 
@@ -14,12 +15,26 @@ object Application extends ZIOAppDefault with StrictLogging {
 
   override def run: ZIO[Any with ZIOAppArgs with Scope, Any, Any] = {
     Thread.setDefaultUncaughtExceptionHandler((t, e) => logger.error("Uncaught exception in thread: " + t, e))
-
-    ZIO.executor.flatMap { executor =>
-      val http    = new Http()
-      val userApi = new UserApi(http)
-      val httpApi = new HttpApi(http, userApi.endpoints, HttpConfig("0.0.0.0", 8080))
-      httpApi.resources(executor.asExecutionContext).use(_ => ZIO.never)
+    val program = ZIO.executor.flatMap { executor =>
+      (for {
+        http    <- ZIO.service[Http]
+        userApi <- ZIO.service[UserApi]
+        xa      <- ZIO.service[HikariTransactor[Task]]
+        _       <- Config.print
+        _       <- Db.checkConnection(xa)
+        httpApi = new HttpApi(http, userApi.endpoints, HttpConfig("0.0.0.0", 8080))
+        _ <- httpApi.scoped(executor.asExecutionContext)
+      } yield ()) *> ZIO.never
     }
+
+    program
+      .provide(
+        Config.live,
+        DbConfig.live,
+        Http.live,
+        Db.live,
+        UserApi.live,
+        Scope.default
+      )
   }
 }

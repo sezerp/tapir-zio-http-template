@@ -5,7 +5,7 @@ import com.pawelzabczynski.infrastructure.JsonSupport._
 import com.pawelzabczynski.util.HttpEndpoints
 import sttp.tapir.generic.auto._
 import sttp.tapir.ztapir.ZServerEndpoint
-import zio.ZIO
+import zio.{ZIO, ZLayer}
 
 class UserApi(http: Http) {
 
@@ -20,6 +20,15 @@ class UserApi(http: Http) {
     }
 
   val endpoints: HttpEndpoints = List(helloEndpoint)
+}
+
+object UserApi {
+  type Env = Http
+  def create(http: Http): UserApi = {
+    new UserApi(http)
+  }
+
+  val live: ZLayer[Env, Nothing, UserApi] = ZLayer.fromFunction(create _)
 }
 
 case class UserIn(name: String) extends AnyVal

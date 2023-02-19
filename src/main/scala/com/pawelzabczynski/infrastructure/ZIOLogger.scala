@@ -31,12 +31,13 @@ object ZIOLogger extends StrictLogging {
 
   private def logWithCause(logLevel: LogLevel, message: () => String, cause: Throwable): Unit = {
     logLevel match {
-      case LogLevel.All   => logger.trace(message(), cause)
-      case LogLevel.Trace => logger.trace(message(), cause)
-      case LogLevel.Info  => logger.info(message(), cause)
-      case LogLevel.Debug => logger.debug(message(), cause)
-      case LogLevel.Error => logger.error(message(), cause)
-      case _              => logger.error(message())
+      case LogLevel.All     => logger.trace(message(), cause)
+      case LogLevel.Trace   => logger.trace(message(), cause)
+      case LogLevel.Info    => logger.info(message(), cause)
+      case LogLevel.Debug   => logger.debug(message(), cause)
+      case LogLevel.Warning => logger.warn(message(), cause)
+      case LogLevel.Error   => logger.error(message(), cause)
+      case _                => logger.error(message())
     }
   }
 

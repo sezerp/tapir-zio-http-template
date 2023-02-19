@@ -32,7 +32,7 @@ lazy val buildInfoSettings = Seq(
 
 lazy val root = (project in file("."))
   .settings(
-    name := "tapir-zio-http-template",
+      name := "tapir-zio-http-template",
     scalaVersion := "2.13.8",
     libraryDependencies ++= allDeps,
     scalacOptions ++= scalaCOpts

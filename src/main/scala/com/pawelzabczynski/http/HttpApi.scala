@@ -11,10 +11,11 @@ import sttp.tapir.server.interceptor.cors.CORSInterceptor
 import sttp.tapir.server.model.ValuedEndpointOutput
 import sttp.tapir.swagger.SwaggerUIOptions
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
-import zio.{Task, UIO, ZIO}
+import zio.{Scope, Task, UIO, ZIO, ZLayer}
 import zio.interop.catz._
 import com.pawelzabczynski.util._
 import com.typesafe.scalalogging.StrictLogging
+import org.http4s.server.Server
 
 import scala.concurrent.ExecutionContext
 
@@ -36,7 +37,6 @@ class HttpApi(http: Http, endpoints: HttpEndpoints, config: HttpConfig) extends 
     }
     .options
 
-  lazy val routes: HttpRoutes[Task] = Http4sServerInterpreter(serverOptions).toRoutes(allEndpoints)
   lazy val allEndpoints: List[ServerEndpoint[Any, Task]] = {
     val docsEndpoints =
       SwaggerInterpreter(swaggerUIOptions = SwaggerUIOptions.default.copy(contextPath = apiContextPath))
@@ -49,15 +49,28 @@ class HttpApi(http: Http, endpoints: HttpEndpoints, config: HttpConfig) extends 
     apiEndpoints
   }
 
+  lazy val routes: HttpRoutes[Task] = Http4sServerInterpreter(serverOptions).toRoutes(allEndpoints)
+
   def resources(ex: ExecutionContext): Resource[Task, org.http4s.server.Server] = BlazeServerBuilder[Task]
     .withExecutionContext(ex)
     .bindHttp(config.port, config.host)
     .withHttpApp(routes.orNotFound)
     .resource
 
+  def scoped(ex: ExecutionContext): ZIO[Scope, Throwable, Server] = resources(ex).toScopedZIO
+
   private def logDebug(msg: String, maybeError: Option[Throwable]): UIO[Unit] = {
     maybeError.fold(ZIO.logDebug(msg))(e => ZIO.logDebugCause(msg, e.toCause))
   }
+}
+
+object HttpApi {
+  type Env = Http with HttpEndpoints with HttpConfig
+  def create(http: Http, endpoints: HttpEndpoints, config: HttpConfig): HttpApi = {
+    new HttpApi(http, endpoints, config)
+  }
+
+  def live: ZLayer[Env, Nothing, HttpApi] = ZLayer.fromFunction(create _)
 }
 
 case class ErrorOut(error: String)

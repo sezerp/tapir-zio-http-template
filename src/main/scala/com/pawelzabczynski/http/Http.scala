@@ -8,7 +8,7 @@ import sttp.tapir.json.circe.TapirJsonCirce
 import io.circe.Printer
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto._
-import zio.{Task, ZIO}
+import zio.{Task, ZIO, ZLayer}
 
 class Http() extends Tapir with TapirJsonCirce {
   val jsonErrorOutOutput: EndpointOutput[ErrorOut]                          = jsonBody[ErrorOut]
@@ -30,4 +30,12 @@ class Http() extends Tapir with TapirJsonCirce {
       }
     }
   }
+}
+
+object Http {
+
+  def create(): Http = {
+    new Http()
+  }
+  val live: ZLayer[Any, Nothing, Http] = ZLayer.fromFunction(Http.create _)
 }

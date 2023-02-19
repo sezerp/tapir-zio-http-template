@@ -4,7 +4,9 @@ import Libs.Versions._
 object Libs {
 
   private lazy val coreDeps = Seq(
-    "dev.zio" %% "zio" % zioVersion
+    "dev.zio" %% "zio"              % zioVersion,
+    "dev.zio" %% "zio-interop-cats" % "3.1.1.0"
+//    "dev.zio" %% "zio-interop-cats" % "23.0.0.1"
   )
 
   private lazy val webDeps = Seq(
@@ -14,7 +16,6 @@ object Libs {
     "com.softwaremill.sttp.tapir"   %% "tapir-prometheus-metrics"      % tapirVersion,
     "com.softwaremill.sttp.tapir"   %% "tapir-swagger-ui-bundle"       % tapirVersion,
     "com.softwaremill.sttp.tapir"   %% "tapir-json-circe"              % tapirVersion,
-    "com.softwaremill.sttp.tapir"   %% "tapir-sttp-stub-server"        % tapirVersion % Test,
     "com.softwaremill.sttp.client3" %% "async-http-client-backend-fs2" % sttpVersion,
     "com.softwaremill.sttp.client3" %% "slf4j-backend"                 % sttpVersion,
     "com.softwaremill.sttp.tapir"   %% "tapir-sttp-stub-server"        % tapirVersion
@@ -29,15 +30,16 @@ object Libs {
   )
 
   private lazy val testDeps = Seq(
-    "dev.zio"                       %% "zio-test"     % zioVersion % Test,
-    "dev.zio"                       %% "zio-test-sbt" % zioVersion % Test,
-    "com.softwaremill.sttp.client3" %% "circe"        % "3.8.11"   % Test,
-    "org.scalatest"                 %% "scalatest"    % "3.2.15"   % Test,
-    "com.softwaremill.quicklens"    %% "quicklens"    % "1.8.10"   % Test
+    "dev.zio"                       %% "zio-test"               % zioVersion   % Test,
+    "dev.zio"                       %% "zio-test-sbt"           % zioVersion   % Test,
+    "com.softwaremill.sttp.client3" %% "circe"                  % "3.8.11"     % Test,
+    "org.scalatest"                 %% "scalatest"              % "3.2.15"     % Test,
+    "com.softwaremill.quicklens"    %% "quicklens"              % "1.8.10"     % Test,
+    "com.softwaremill.sttp.tapir"   %% "tapir-sttp-stub-server" % tapirVersion % Test
   )
 
   private val configDeps = Seq(
-    "com.github.pureconfig" %% "pureconfig" % "0.17.1"
+    "com.github.pureconfig" %% "pureconfig" % "0.17.2"
   )
 
   private val monitoringDeps = Seq(
@@ -63,11 +65,11 @@ object Libs {
     dbDependencies
 
   object Versions {
-    val zioVersion        = "2.0.8"
+    val zioVersion        = "2.0.1"
     val tapirVersion      = "1.2.5"
     val prometheusVersion = "0.15.0"
     val sttpVersion       = "3.6.2"
-    val doobieVersion     = "1.0.0-RC2"
+    val doobieVersion     = "1.0.0-M5"
     val flywayVersion     = "9.14.1"
   }
 }

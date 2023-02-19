@@ -21,7 +21,7 @@ class TestBase extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
     val http    = new Http()
     val userApi = new UserApi(http)
 
-    httpApi = new HttpApi(http, userApi.endpoints, TestConfig.httpConfig)
+    httpApi = new HttpApi(http, userApi.endpoints, TestConfig.api)
   }
 
   private val stubBackend: SttpBackendStub[Task, Any] = AsyncHttpClientFs2Backend.stub[Task]
