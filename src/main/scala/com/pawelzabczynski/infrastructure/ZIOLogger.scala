@@ -1,10 +1,10 @@
 package com.pawelzabczynski.infrastructure
 
-import com.typesafe.scalalogging.StrictLogging
+import com.typesafe.scalalogging.LazyLogging
 import zio.{Cause, FiberId, FiberRefs, LogLevel, LogSpan, Trace, ZLogger}
 import org.slf4j.MDC
 
-object ZIOLogger extends StrictLogging {
+object ZIOLogger extends LazyLogging {
   object MdcKey {
     val CorrelationId = "correlation_id"
   }

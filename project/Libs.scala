@@ -35,7 +35,8 @@ object Libs {
     "com.softwaremill.sttp.client3" %% "circe"                  % "3.8.11"     % Test,
     "org.scalatest"                 %% "scalatest"              % "3.2.15"     % Test,
     "com.softwaremill.quicklens"    %% "quicklens"              % "1.8.10"     % Test,
-    "com.softwaremill.sttp.tapir"   %% "tapir-sttp-stub-server" % tapirVersion % Test
+    "com.softwaremill.sttp.tapir"   %% "tapir-sttp-stub-server" % tapirVersion % Test,
+    "com.opentable.components"       % "otj-pg-embedded"        % "0.13.3"      % Test
   )
 
   private val configDeps = Seq(
