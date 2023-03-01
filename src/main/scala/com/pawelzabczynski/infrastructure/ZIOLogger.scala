@@ -1,10 +1,10 @@
 package com.pawelzabczynski.infrastructure
 
-import com.typesafe.scalalogging.StrictLogging
+import com.typesafe.scalalogging.LazyLogging
 import zio.{Cause, FiberId, FiberRefs, LogLevel, LogSpan, Trace, ZLogger}
 import org.slf4j.MDC
 
-object ZIOLogger extends StrictLogging {
+object ZIOLogger extends LazyLogging {
   object MdcKey {
     val CorrelationId = "correlation_id"
   }
@@ -31,12 +31,13 @@ object ZIOLogger extends StrictLogging {
 
   private def logWithCause(logLevel: LogLevel, message: () => String, cause: Throwable): Unit = {
     logLevel match {
-      case LogLevel.All   => logger.trace(message(), cause)
-      case LogLevel.Trace => logger.trace(message(), cause)
-      case LogLevel.Info  => logger.info(message(), cause)
-      case LogLevel.Debug => logger.debug(message(), cause)
-      case LogLevel.Error => logger.error(message(), cause)
-      case _              => logger.error(message())
+      case LogLevel.All     => logger.trace(message(), cause)
+      case LogLevel.Trace   => logger.trace(message(), cause)
+      case LogLevel.Info    => logger.info(message(), cause)
+      case LogLevel.Debug   => logger.debug(message(), cause)
+      case LogLevel.Warning => logger.warn(message(), cause)
+      case LogLevel.Error   => logger.error(message(), cause)
+      case _                => logger.error(message())
     }
   }
 

@@ -2,7 +2,6 @@ package com.pawelzabczynski.test
 
 import com.pawelzabczynski.http.ErrorOut
 import io.circe.{Decoder, parser}
-import zio.{Runtime, Task, Unsafe}
 import com.pawelzabczynski.infrastructure.JsonSupport._
 
 import scala.reflect.ClassTag
@@ -32,16 +31,6 @@ trait TestSupport {
 
     def shouldDeserializeToError: String = {
       parser.parse(r.getLeft).flatMap(_.as[ErrorOut]).get.error
-    }
-  }
-
-  implicit class RichTask[T](t: Task[T]) {
-    def unwrap: T = {
-      Unsafe.unsafe { implicit runtime =>
-        Runtime.default.unsafe
-          .run(t)
-          .getOrThrowFiberFailure()
-      }
     }
   }
 }

@@ -7,7 +7,7 @@ val scalafixConfig = Seq(
   semanticdbVersion := scalafixSemanticdb.revision
 )
 
-val scalaCOpts = Seq(
+val scalaCopts = Seq(
   "-Ywarn-unused:imports",
   "-language:postfixOps"
 )
@@ -32,10 +32,10 @@ lazy val buildInfoSettings = Seq(
 
 lazy val root = (project in file("."))
   .settings(
-    name := "tapir-zio-http-template",
+      name := "tapir-zio-http-template",
     scalaVersion := "2.13.8",
     libraryDependencies ++= allDeps,
-    scalacOptions ++= scalaCOpts
+    scalacOptions ++= scalaCopts
   )
   .settings(scalafixConfig)
   .enablePlugins(BuildInfoPlugin)
