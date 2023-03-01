@@ -1,8 +1,10 @@
 package com.pawelzabczynski.test
 
 import com.pawelzabczynski.http.{Http, HttpApi}
+import com.pawelzabczynski.metrics.MetricsApi
 import com.pawelzabczynski.user.UserApi
 import com.typesafe.scalalogging.StrictLogging
+import io.prometheus.client.CollectorRegistry
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -20,10 +22,13 @@ class TestBase extends AnyFlatSpec with Matchers with BeforeAndAfterAll with Tes
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    val http    = new Http()
-    val userApi = new UserApi(http, currentDb.xa)
+    val http       = new Http()
+    val registry   = CollectorRegistry.defaultRegistry
+    val userApi    = new UserApi(http, currentDb.xa)
+    val metricsApi = new MetricsApi(http, registry)
+    val endpoints  = userApi.endpoints ++ metricsApi.endpoints
 
-    httpApi = new HttpApi(http, userApi.endpoints, TestConfig.api)
+    httpApi = new HttpApi(http, endpoints, TestConfig.api, registry)
   }
 
   private val stubBackend: SttpBackendStub[Task, Any] = AsyncHttpClientFs2Backend.stub[Task]

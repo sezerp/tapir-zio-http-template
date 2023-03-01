@@ -12,6 +12,7 @@ import zio.{Task, ZIO, ZLayer}
 import java.time.Instant
 import java.util.UUID
 import com.pawelzabczynski.infrastructure.Doobie._
+import com.pawelzabczynski.metrics.Metrics
 import zio.interop.catz._
 
 class UserApi(http: Http, xa: Transactor[Task]) {
@@ -38,6 +39,7 @@ class UserApi(http: Http, xa: Transactor[Task]) {
             )
           )
           .transact(xa)
+        _ <- ZIO.succeed(Metrics.UserMetrics.registeredUsers.inc())
         _ <- ZIO.logInfo("user created.")
       } yield UserOut(s"Hello ${user.name}")).toOut
     }
