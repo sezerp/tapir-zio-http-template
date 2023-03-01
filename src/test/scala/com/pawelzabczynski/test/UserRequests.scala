@@ -9,6 +9,6 @@ trait UserRequests { self: TestRequestSupport with TestSupport =>
     basicRequest
       .get(uri"$basePath/hello?name=$name")
       .send(backend)
-      .unwrap
+      .runUnsafe()
   }
 }
