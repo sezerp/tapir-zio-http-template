@@ -15,11 +15,15 @@ import zio.{Scope, Task, UIO, ZIO, ZLayer}
 import zio.interop.catz._
 import com.pawelzabczynski.util._
 import com.typesafe.scalalogging.StrictLogging
+import io.prometheus.client.CollectorRegistry
 import org.http4s.server.Server
+import org.http4s.metrics.prometheus.Prometheus
+import org.http4s.server.middleware.Metrics
 
 import scala.concurrent.ExecutionContext
 
-class HttpApi(http: Http, endpoints: HttpEndpoints, config: HttpConfig) extends StrictLogging {
+class HttpApi(http: Http, endpoints: HttpEndpoints, config: HttpConfig, collectorRegistry: CollectorRegistry)
+    extends StrictLogging {
   private val apiContextPath = List("api", "v1")
 
   val serverOptions: Http4sServerOptions[Task] = Http4sServerOptions
@@ -51,11 +55,18 @@ class HttpApi(http: Http, endpoints: HttpEndpoints, config: HttpConfig) extends 
 
   lazy val routes: HttpRoutes[Task] = Http4sServerInterpreter(serverOptions).toRoutes(allEndpoints)
 
-  def resources(ex: ExecutionContext): Resource[Task, org.http4s.server.Server] = BlazeServerBuilder[Task]
-    .withExecutionContext(ex)
-    .bindHttp(config.port, config.host)
-    .withHttpApp(routes.orNotFound)
-    .resource
+  def resources(ex: ExecutionContext): Resource[Task, org.http4s.server.Server] = {
+    Prometheus
+      .metricsOps[Task](collectorRegistry)
+      .map(m => Metrics[Task](m)(routes))
+      .flatMap { monitoredRoutes =>
+        BlazeServerBuilder[Task]
+          .withExecutionContext(ex)
+          .bindHttp(config.port, config.host)
+          .withHttpApp(monitoredRoutes.orNotFound)
+          .resource
+      }
+  }
 
   def scoped(ex: ExecutionContext): ZIO[Scope, Throwable, Server] = resources(ex).toScopedZIO
 
@@ -65,9 +76,14 @@ class HttpApi(http: Http, endpoints: HttpEndpoints, config: HttpConfig) extends 
 }
 
 object HttpApi {
-  type Env = Http with HttpEndpoints with HttpConfig
-  def create(http: Http, endpoints: HttpEndpoints, config: HttpConfig): HttpApi = {
-    new HttpApi(http, endpoints, config)
+  type Env = Http with HttpEndpoints with HttpConfig with CollectorRegistry
+  def create(
+      http: Http,
+      endpoints: HttpEndpoints,
+      config: HttpConfig,
+      collectorRegistry: CollectorRegistry
+  ): HttpApi = {
+    new HttpApi(http, endpoints, config, collectorRegistry)
   }
 
   def live: ZLayer[Env, Nothing, HttpApi] = ZLayer.fromFunction(create _)
