@@ -4,8 +4,9 @@ import Libs.Versions._
 object Libs {
 
   private lazy val coreDeps = Seq(
-    "dev.zio" %% "zio"              % zioVersion,
-    "dev.zio" %% "zio-interop-cats" % "23.0.0.0"
+    "dev.zio"                 %% "zio"              % zioVersion,
+    "dev.zio"                 %% "zio-interop-cats" % "23.0.0.0",
+    "com.softwaremill.common" %% "tagging"          % "2.3.4"
   )
 
   private lazy val webDeps = Seq(
@@ -35,7 +36,7 @@ object Libs {
     "org.scalatest"                 %% "scalatest"              % "3.2.15"     % Test,
     "com.softwaremill.quicklens"    %% "quicklens"              % "1.8.10"     % Test,
     "com.softwaremill.sttp.tapir"   %% "tapir-sttp-stub-server" % tapirVersion % Test,
-    "com.opentable.components"       % "otj-pg-embedded"        % "0.13.3"     % Test
+    "io.zonky.test"                  % "embedded-postgres"      % "2.0.3"      % Test
   )
 
   private val configDeps = Seq(
@@ -50,11 +51,15 @@ object Libs {
     "org.http4s"                    %% "http4s-prometheus-metrics" % http4sVersion
   )
 
-  val dbDependencies = Seq(
+  private val dbDependencies = Seq(
     "org.tpolecat" %% "doobie-core"     % doobieVersion,
     "org.tpolecat" %% "doobie-hikari"   % doobieVersion,
     "org.tpolecat" %% "doobie-postgres" % doobieVersion,
     "org.flywaydb"  % "flyway-core"     % flywayVersion
+  )
+
+  private val securityDeps = Seq(
+    "com.github.t3hnar" %% "scala-bcrypt" % "4.3.0"
   )
 
   lazy val allDeps: Seq[ModuleID] = coreDeps ++
@@ -63,7 +68,8 @@ object Libs {
     testDeps ++
     configDeps ++
     monitoringDeps ++
-    dbDependencies
+    dbDependencies ++
+    securityDeps
 
   object Versions {
     val zioVersion        = "2.0.9"

@@ -23,7 +23,7 @@ class MetricsApi(http: Http, registry: CollectorRegistry) {
           w.toString
         }
         .tapError(e => ZIO.logErrorCause("Error occurred when scrap metrics", e.toCause))
-        .toOut
+        .toTaskEither
     }
 
   val endpoints: HttpEndpoints = List(metricsEndpoint)

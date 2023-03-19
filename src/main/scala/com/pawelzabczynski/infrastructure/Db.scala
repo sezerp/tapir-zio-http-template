@@ -3,7 +3,7 @@ package com.pawelzabczynski.infrastructure
 import zio.{Scope, Task, ZIO, ZLayer, durationInt}
 import doobie.hikari.HikariTransactor
 import doobie.Transactor
-import Doobie._
+import com.pawelzabczynski.infrastructure.Doobie._
 import cats.effect.kernel.Resource
 import com.pawelzabczynski.util.ErrorOps
 import doobie.util.ExecutionContexts

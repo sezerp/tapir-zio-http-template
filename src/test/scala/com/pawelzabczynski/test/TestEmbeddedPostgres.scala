@@ -1,8 +1,8 @@
 package com.pawelzabczynski.test
 
-import com.opentable.db.postgres.embedded.EmbeddedPostgres
 import com.pawelzabczynski.config.Sensitive
 import com.pawelzabczynski.infrastructure.DbConfig
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import org.postgresql.jdbc.PgConnection
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 
