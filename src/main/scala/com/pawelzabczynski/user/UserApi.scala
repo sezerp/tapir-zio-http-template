@@ -2,55 +2,41 @@ package com.pawelzabczynski.user
 
 import com.pawelzabczynski.http.Http
 import com.pawelzabczynski.infrastructure.JsonSupport._
-import com.pawelzabczynski.util.HttpEndpoints
+import com.pawelzabczynski.util.{HttpEndpoints, IdGenerator}
 import doobie.hikari.HikariTransactor
 import doobie.util.transactor.Transactor
 import sttp.tapir.generic.auto._
 import sttp.tapir.ztapir.ZServerEndpoint
 import zio.{Task, ZIO, ZLayer}
 
-import java.time.Instant
 import java.util.UUID
-import com.pawelzabczynski.infrastructure.Doobie._
 import com.pawelzabczynski.metrics.Metrics
-import zio.interop.catz._
+import com.pawelzabczynski.user.UserService.UserServiceError
 
-class UserApi(http: Http, xa: Transactor[Task]) {
+class UserApi(userService: UserService, http: Http, xa: Transactor[Task]) {
 
   import http._
 
-  val helloEndpoint: ZServerEndpoint[Any, Any] = baseEndpoint.get
-    .in("hello")
-    .in(query[UserIn]("name"))
-    .out(jsonBody[UserOut])
-    .serverLogic { user =>
+  val registerEndpoint: ZServerEndpoint[Any, Any] = baseEndpoint.post
+    .in("register")
+    .in(jsonBody[UserRegisterRequest])
+    .out(jsonBody[UserRegisterResponse])
+    .serverLogic { data =>
       (for {
-        _ <- ZIO.logInfo(s"User: $user")
-        _ <- ZIO.logInfo(s"## Transactor: $xa")
-        _ <- UserModel
-          .insert(
-            User(
-              UUID.randomUUID().toString,
-              UUID.randomUUID().toString,
-              UUID.randomUUID().toString,
-              UUID.randomUUID().toString,
-              UUID.randomUUID().toString,
-              Instant.now()
-            )
-          )
-          .transact(xa)
+        result <- userService
+          .register(data)
+          .mapError(UserServiceError.toThrowable)
         _ <- ZIO.succeed(Metrics.UserMetrics.registeredUsers.inc())
-        _ <- ZIO.logInfo("user created.")
-      } yield UserOut(s"Hello ${user.name}")).toOut
+      } yield UserRegisterResponse(result.apiKey.id)).toTaskEither
     }
 
-  val endpoints: HttpEndpoints = List(helloEndpoint)
+  val endpoints: HttpEndpoints = List(registerEndpoint).map(_.tag("user"))
 }
 
 object UserApi {
-  type Env = Http with HikariTransactor[Task]
-  def create(http: Http, xa: HikariTransactor[Task]): UserApi = {
-    new UserApi(http, xa)
+  type Env = UserService with Http with HikariTransactor[Task] with IdGenerator
+  def create(userService: UserService, http: Http, xa: HikariTransactor[Task]): UserApi = {
+    new UserApi(userService, http, xa)
   }
 
   val live: ZLayer[Env, Nothing, UserApi] = ZLayer.fromFunction(create _)
@@ -58,3 +44,5 @@ object UserApi {
 
 case class UserIn(name: String) extends AnyVal
 case class UserOut(message: String)
+case class UserRegisterRequest(accountName: String, login: String, email: String, password: String)
+case class UserRegisterResponse(apiKey: UUID)

@@ -1,8 +1,11 @@
 package com.pawelzabczynski.test
 
+import com.pawelzabczynski.account.AccountService
 import com.pawelzabczynski.http.{Http, HttpApi}
 import com.pawelzabczynski.metrics.MetricsApi
-import com.pawelzabczynski.user.UserApi
+import com.pawelzabczynski.security.apiKey.ApiKeyService
+import com.pawelzabczynski.user.{UserApi, UserService}
+import com.pawelzabczynski.util.IdGenerator
 import com.typesafe.scalalogging.StrictLogging
 import io.prometheus.client.CollectorRegistry
 import org.scalatest.BeforeAndAfterAll
@@ -22,11 +25,16 @@ class TestBase extends AnyFlatSpec with Matchers with BeforeAndAfterAll with Tes
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    val http       = new Http()
-    val registry   = CollectorRegistry.defaultRegistry
-    val userApi    = new UserApi(http, currentDb.xa)
-    val metricsApi = new MetricsApi(http, registry)
-    val endpoints  = userApi.endpoints ++ metricsApi.endpoints
+    val idGenerator    = IdGenerator.default
+    val clock          = TestClock
+    val http           = new Http()
+    val registry       = CollectorRegistry.defaultRegistry
+    val accountService = new AccountService(idGenerator, clock)
+    val apiKeyService  = new ApiKeyService(idGenerator, clock)
+    val userService    = new UserService(accountService, apiKeyService, idGenerator, clock, currentDb.xa)
+    val userApi        = new UserApi(userService, http, currentDb.xa)
+    val metricsApi     = new MetricsApi(http, registry)
+    val endpoints      = userApi.endpoints ++ metricsApi.endpoints
 
     httpApi = new HttpApi(http, endpoints, TestConfig.api, registry)
   }

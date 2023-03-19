@@ -7,12 +7,11 @@ import com.pawelzabczynski.infrastructure.JsonSupport._
 
 class UserApiTest extends TestBase with Eventually with TestSupport {
 
-  "[GET] hello endpoint" should "return hello message as a json" in {
-    val name     = "test name"
-    val response = requests.helloGetRequest(name)
+  "[GET] register endpoint" should "return apiKey" in {
+    val request  = UserRegisterRequest("account name", "user_login", "test@email.com", "some_password_123")
+    val response = requests.userRegister(request)
 
     response.code shouldBe StatusCode.Ok
-    response.body.shouldDeserializeTo[UserOut]
-    response.body.shouldDeserializeTo[UserOut].message shouldBe s"Hello $name"
+    response.body.shouldDeserializeTo[UserRegisterResponse]
   }
 }
