@@ -7,7 +7,7 @@ import pureconfig.ConfigSource
 import pureconfig.generic.auto._
 import zio.{RIO, Task, UIO, ZIO, ZLayer}
 
-case class Config(api: HttpConfig, db: DbConfig)
+case class Config(api: HttpConfig, db: DbConfig, userService: UserServiceConfig)
 
 object Config extends LazyLogging {
   private val load: Task[Config] = ZIO.attempt(ConfigSource.default.loadOrThrow[Config])

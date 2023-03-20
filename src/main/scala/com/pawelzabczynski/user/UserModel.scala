@@ -18,6 +18,11 @@ object UserModel {
        """.stripMargin.update.run.void
   }
 
+  def login(emailOrLogin: String): ConnectionIO[Option[User]] = {
+    val emailOrLoginLowercase = emailOrLogin.toLowerCase
+    findBy(fr"WHERE email_lowercase = $emailOrLoginLowercase OR login_lowercase = $emailOrLoginLowercase")
+  }
+
   def findById(id: UserId): ConnectionIO[Option[User]] = {
     findBy(fr"WHERE id = $id")
   }
@@ -58,5 +63,9 @@ object User {
 
   def hash(password: String): String = {
     password.bcryptBounded(11)
+  }
+
+  def verifyPw(pw: String, pwHash: String): Boolean = {
+    pw.isBcryptedBounded(pwHash)
   }
 }
