@@ -31,10 +31,11 @@ class TestBase extends AnyFlatSpec with Matchers with BeforeAndAfterAll with Tes
     val registry       = CollectorRegistry.defaultRegistry
     val accountService = new AccountService(idGenerator, clock)
     val apiKeyService  = new ApiKeyService(idGenerator, clock)
-    val userService    = new UserService(accountService, apiKeyService, idGenerator, clock, currentDb.xa)
-    val userApi        = new UserApi(userService, http, currentDb.xa)
-    val metricsApi     = new MetricsApi(http, registry)
-    val endpoints      = userApi.endpoints ++ metricsApi.endpoints
+    val userService =
+      new UserService(TestConfig.userService, accountService, apiKeyService, idGenerator, clock, currentDb.xa)
+    val userApi    = new UserApi(userService, http, currentDb.xa)
+    val metricsApi = new MetricsApi(http, registry)
+    val endpoints  = userApi.endpoints ++ metricsApi.endpoints
 
     httpApi = new HttpApi(http, endpoints, TestConfig.api, registry)
   }

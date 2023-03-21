@@ -1,6 +1,6 @@
 package com.pawelzabczynski
 
-import com.pawelzabczynski.config.{Config, Sensitive}
+import com.pawelzabczynski.config.{Config, Sensitive, UserServiceConfig}
 import com.pawelzabczynski.http.HttpConfig
 import com.pawelzabczynski.infrastructure.DbConfig
 import zio.{Duration, Task, Unsafe}
@@ -9,7 +9,8 @@ import zio._
 package object test {
   val TestConfig: Config = Config(
     HttpConfig("localhost", 8080),
-    DbConfig("postgres", Sensitive(""), "", true, "org.postgresql.Driver", 4)
+    DbConfig("postgres", Sensitive(""), "", true, "org.postgresql.Driver", 4),
+    UserServiceConfig(11)
   )
 
   implicit class TestUnsafeOps[A](t: Task[A]) {

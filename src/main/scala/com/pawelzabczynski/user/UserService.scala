@@ -4,9 +4,11 @@ import com.pawelzabczynski.Fail
 import com.pawelzabczynski.account.Account.AccountId
 import com.pawelzabczynski.infrastructure.Doobie._
 import com.pawelzabczynski.account.{Account, AccountService}
+import com.pawelzabczynski.config.{Config, UserServiceConfig}
 import com.pawelzabczynski.security.AdminRole
 import com.pawelzabczynski.security.apiKey.{ApiKey, ApiKeyService}
 import com.pawelzabczynski.user.UserService.{
+  IncorrectAuthData,
   RegistrationError,
   UserRegistration,
   UserServiceError,
@@ -19,6 +21,7 @@ import zio.{IO, Task, URLayer, ZIO, ZLayer}
 import zio.interop.catz._
 
 class UserService(
+    config: UserServiceConfig,
     accountService: AccountService,
     apiKeyService: ApiKeyService,
     idGenerator: IdGenerator,
@@ -34,10 +37,38 @@ class UserService(
     } yield UserRegistration(user, account, apiKey)
 
     checkIfUserExist(data.login, data.email) *>
+      validateUserPasswordLength(data.password) *>
       transaction
         .transact(xa)
         .tapError(e => ZIO.logErrorCause("Error occurred when try register new user", e.toCause))
         .mapError(_ => UserServiceInternalError)
+  }
+
+  def login(request: UserLoginRequest): IO[UserServiceError, ApiKey] = {
+    for {
+      maybeUser <- UserModel
+        .login(request.loginOrEmail)
+        .transact(xa)
+        .tapError(e => ZIO.logErrorCause(s"Error occurred when try find user ${request.loginOrEmail}.", e.toCause))
+        .mapError(_ => UserServiceInternalError)
+      user <- ZIO.getOrFailWith(IncorrectAuthData)(maybeUser)
+      _    <- verifyPassword(user, request.password)
+      apiKey <- apiKeyService
+        .create(user.id)
+        .transact(xa)
+        .tapError(e => ZIO.logErrorCause(s"Error occurred when try generate api key.", e.toCause))
+        .mapError(_ => UserServiceInternalError)
+    } yield apiKey
+  }
+
+  private def verifyPassword(user: User, pw: String): IO[UserServiceError, Unit] = {
+    if (User.verifyPw(pw, user.password)) ZIO.unit
+    else ZIO.fail(IncorrectAuthData)
+  }
+
+  private def validateUserPasswordLength(pw: String): IO[UserServiceError, Unit] = {
+    if (pw.length >= config.minPasswordLength) ZIO.unit
+    else ZIO.fail(RegistrationError(s"The min password length is ${config.minPasswordLength}."))
   }
 
   private def checkIfUserExist(login: String, email: String): IO[UserServiceError, Unit] = {
@@ -76,28 +107,31 @@ class UserService(
 }
 
 object UserService {
-  type Env = AccountService with ApiKeyService with IdGenerator with Clock with Transactor[Task]
+  type Env = Config with AccountService with ApiKeyService with IdGenerator with Clock with Transactor[Task]
 
   case class UserRegistration(user: User, account: Account, apiKey: ApiKey)
 
   def unsafeCreate(
+      config: Config,
       accountService: AccountService,
       apiKeyService: ApiKeyService,
       idGenerator: IdGenerator,
       clock: Clock,
       xa: Transactor[Task]
   ): UserService = {
-    new UserService(accountService, apiKeyService, idGenerator, clock, xa)
+    new UserService(config.userService, accountService, apiKeyService, idGenerator, clock, xa)
   }
 
   sealed trait UserServiceError
   case class RegistrationError(msg: String) extends UserServiceError
+  case object IncorrectAuthData             extends UserServiceError
   case object UserServiceInternalError      extends UserServiceError
 
   object UserServiceError {
     def toThrowable(ue: UserServiceError): Throwable = {
       ue match {
         case RegistrationError(msg)   => Fail.IncorrectInput(msg)
+        case IncorrectAuthData        => Fail.Unauthorized
         case UserServiceInternalError => Fail.InternalServerError
       }
     }

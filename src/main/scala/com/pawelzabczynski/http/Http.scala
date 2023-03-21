@@ -3,16 +3,19 @@ package com.pawelzabczynski.http
 import com.pawelzabczynski.Fail
 import com.pawelzabczynski.infrastructure.JsonSupport._
 import Fail.{IncorrectInput, Unauthorized}
-import sttp.tapir.{EndpointOutput, PublicEndpoint, Tapir}
+import com.pawelzabczynski.util.Id
+import sttp.tapir.{Codec, EndpointOutput, PublicEndpoint, Schema, Tapir}
 import sttp.tapir.json.circe.TapirJsonCirce
 import io.circe.Printer
 import sttp.model.StatusCode
+import sttp.tapir.Codec.PlainCodec
 import sttp.tapir.generic.auto._
 import zio.{Task, ZIO, ZLayer}
+import com.softwaremill.tagging._
 
 import java.util.UUID
 
-class Http() extends Tapir with TapirJsonCirce {
+class Http() extends Tapir with TapirJsonCirce with TapirSchemas {
   val jsonErrorOutOutput: EndpointOutput[ErrorOut]                          = jsonBody[ErrorOut]
   val failOutput: EndpointOutput[(StatusCode, ErrorOut)]                    = statusCode.and(jsonErrorOutOutput)
   val baseEndpoint: PublicEndpoint[Unit, (StatusCode, ErrorOut), Unit, Any] = endpoint.errorOut(failOutput)
@@ -43,4 +46,14 @@ object Http {
     new Http()
   }
   val live: ZLayer[Any, Nothing, Http] = ZLayer.fromFunction(Http.create _)
+}
+
+trait TapirSchemas {
+  implicit val idPlainCodec: PlainCodec[Id] = Codec.uuid.map(_.asInstanceOf[Id])(identity)
+  implicit def taggedPlainCodec[U, T](implicit uc: PlainCodec[U]): PlainCodec[U @@ T] =
+    uc.map(_.taggedWith[T])(identity)
+
+  implicit val schemaForId: Schema[Id] = Schema.schemaForUUID.asInstanceOf[Schema[Id]]
+
+  implicit def schemaForTagged[T]: Schema[Id @@ T] = schemaForId.asInstanceOf[Schema[Id @@ T]]
 }
