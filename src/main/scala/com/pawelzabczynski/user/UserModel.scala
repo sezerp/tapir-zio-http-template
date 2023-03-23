@@ -37,6 +37,15 @@ object UserModel {
     findBy(fr"WHERE login_lowercase = $loginLoweCase")
   }
 
+  def updatePassword(id: UserId, password: String): ConnectionIO[Unit] = {
+    sql"""
+         UPDATE users
+            SET
+                password = $password
+         WHERE id = $id
+       """.update.run.void
+  }
+
   private def findBy(where: Fragment): ConnectionIO[Option[User]] = {
     (fr"""
         SELECT id, account_id, login, "role", email_lowercase, login_lowercase, password, created_on

@@ -61,6 +61,19 @@ class UserService(
     } yield apiKey
   }
 
+  def changePassword(user: User, request: UserChangePasswordRequest): IO[UserServiceError, Unit] = {
+    for {
+      _ <- verifyPassword(user, request.currentPassword)
+      _ <- validateUserPasswordLength(request.newPassword)
+      pwHash = User.hash(request.newPassword)
+      _ <- UserModel
+        .updatePassword(user.id, pwHash)
+        .transact(xa)
+        .tapError(e => ZIO.logErrorCause(s"Error occurred when try generate api key.", e.toCause))
+        .mapError(_ => UserServiceInternalError)
+    } yield ()
+  }
+
   private def verifyPassword(user: User, pw: String): IO[UserServiceError, Unit] = {
     if (User.verifyPw(pw, user.password)) ZIO.unit
     else ZIO.fail(IncorrectAuthData)

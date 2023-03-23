@@ -2,12 +2,13 @@ package com.pawelzabczynski.security.auth
 
 import cats.implicits.toFunctorOps
 import com.pawelzabczynski.infrastructure.Doobie._
+import com.pawelzabczynski.security.apiKey.ApiKey
 import com.pawelzabczynski.security.auth.AuthService.{AuthError, AuthInternalError, ExpiredToken, NotExists, Service}
 import com.pawelzabczynski.user.{User, UserModel}
 import com.pawelzabczynski.util.{Clock, ErrorOps, Id}
 import doobie.util.transactor.Transactor
 import zio.interop.catz._
-import zio.{IO, Task, UIO, ZIO}
+import zio.{IO, Task, UIO, URLayer, ZIO, ZLayer}
 
 class Auth[A](authOps: AuthOps[A], clock: Clock, xa: Transactor[Task]) extends Service {
   override def auth(id: Id): IO[AuthService.AuthError, User] = {
@@ -50,7 +51,10 @@ class Auth[A](authOps: AuthOps[A], clock: Clock, xa: Transactor[Task]) extends S
 }
 
 object Auth {
-  def unsafeCreate[A](authOps: AuthOps[A], clock: Clock, xa: Transactor[Task]): AuthService.Service = {
-    new Auth(authOps, clock, xa)
+  def unsafeCreate[A](authOps: AuthOps[A], clock: Clock, xa: Transactor[Task]): Auth[A] = {
+    new Auth[A](authOps, clock, xa)
   }
+
+  val liveApiKeyAuth: URLayer[AuthOps[ApiKey] with Clock with Transactor[Task], Auth[ApiKey]] =
+    ZLayer.fromFunction(unsafeCreate[ApiKey] _)
 }
