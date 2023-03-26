@@ -3,7 +3,8 @@ package com.pawelzabczynski.test
 import com.pawelzabczynski.account.AccountService
 import com.pawelzabczynski.http.{Http, HttpApi}
 import com.pawelzabczynski.metrics.MetricsApi
-import com.pawelzabczynski.security.apiKey.ApiKeyService
+import com.pawelzabczynski.security.apiKey.{ApiKey, ApiKeyAuthOps, ApiKeyService}
+import com.pawelzabczynski.security.auth.Auth
 import com.pawelzabczynski.user.{UserApi, UserService}
 import com.pawelzabczynski.util.IdGenerator
 import com.typesafe.scalalogging.StrictLogging
@@ -28,12 +29,14 @@ class TestBase extends AnyFlatSpec with Matchers with BeforeAndAfterAll with Tes
     val idGenerator    = IdGenerator.default
     val clock          = TestClock
     val http           = new Http()
+    val apiKeyAuthOps  = new ApiKeyAuthOps
+    val apiKeyAuth     = new Auth[ApiKey](apiKeyAuthOps, clock, currentDb.xa)
     val registry       = CollectorRegistry.defaultRegistry
     val accountService = new AccountService(idGenerator, clock)
     val apiKeyService  = new ApiKeyService(idGenerator, clock)
     val userService =
       new UserService(TestConfig.userService, accountService, apiKeyService, idGenerator, clock, currentDb.xa)
-    val userApi    = new UserApi(userService, http, currentDb.xa)
+    val userApi    = new UserApi(userService, apiKeyAuth, http, currentDb.xa)
     val metricsApi = new MetricsApi(http, registry)
     val endpoints  = userApi.endpoints ++ metricsApi.endpoints
 

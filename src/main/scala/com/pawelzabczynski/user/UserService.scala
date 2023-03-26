@@ -1,5 +1,6 @@
 package com.pawelzabczynski.user
 
+import cats.implicits.catsSyntaxApplicativeId
 import com.pawelzabczynski.Fail
 import com.pawelzabczynski.account.Account.AccountId
 import com.pawelzabczynski.infrastructure.Doobie._
@@ -59,6 +60,29 @@ class UserService(
         .tapError(e => ZIO.logErrorCause(s"Error occurred when try generate api key.", e.toCause))
         .mapError(_ => UserServiceInternalError)
     } yield apiKey
+  }
+
+  def changePassword(user: User, request: UserChangePasswordRequest): IO[UserServiceError, Unit] = {
+    for {
+      _ <- verifyPassword(user, request.currentPassword)
+      _ <- validateUserPasswordLength(request.newPassword)
+      pwHash = User.hash(request.newPassword)
+      _ <- UserModel
+        .updatePassword(user.id, pwHash)
+        .transact(xa)
+        .tapError(e => ZIO.logErrorCause(s"Error occurred when try generate api key.", e.toCause))
+        .mapError(_ => UserServiceInternalError)
+    } yield ()
+  }
+
+  def patchUser(user: User, request: UserPatchRequest): IO[UserServiceError, Unit] = {
+    (for {
+      updatedUser <- User.patch(user, request).pure[ConnectionIO]
+      _           <- UserModel.update(updatedUser)
+    } yield ())
+      .transact(xa)
+      .tapError(e => ZIO.logErrorCause(s"Error occurred when try patch user entity.", e.toCause))
+      .mapError(_ => UserServiceInternalError)
   }
 
   private def verifyPassword(user: User, pw: String): IO[UserServiceError, Unit] = {

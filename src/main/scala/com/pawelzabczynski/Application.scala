@@ -5,7 +5,8 @@ import com.pawelzabczynski.config.Config
 import com.pawelzabczynski.http.{Http, HttpApi}
 import com.pawelzabczynski.infrastructure.{Db, DbConfig, DbTransactor, ZIOLogger}
 import com.pawelzabczynski.metrics.{Metrics, MetricsApi}
-import com.pawelzabczynski.security.apiKey.ApiKeyService
+import com.pawelzabczynski.security.apiKey.{ApiKeyAuthOps, ApiKeyService}
+import com.pawelzabczynski.security.auth.Auth
 import com.pawelzabczynski.user.{UserApi, UserService}
 import com.pawelzabczynski.util.{Clock, IdGenerator}
 import com.typesafe.scalalogging.StrictLogging
@@ -51,7 +52,9 @@ object Application extends ZIOAppDefault with StrictLogging {
         Clock.live,
         UserService.live,
         AccountService.live,
-        ApiKeyService.live
+        ApiKeyService.live,
+        Auth.liveApiKeyAuth,
+        ApiKeyAuthOps.live
       )
   }
 }

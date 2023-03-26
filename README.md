@@ -14,13 +14,4 @@ The project is inspired by [Softwaremill Bootzooka project](https://github.com/s
 
 Import project to intellij and run Application.
 
-```shell
-curl --location --request GET 'http://localhost:8080/api/v1/hello?name=Paweł'
-```
-
-With correlation ID to test if provided will appear in logs
-
-```shell
-curl --location --request GET 'http://localhost:8080/api/v1/hello?name=Paweł' \
---header 'X-Correlation-ID: test-correlation-id'
-```
+After run go to [API docs](http://localhost:8080/api/v1/docs/)

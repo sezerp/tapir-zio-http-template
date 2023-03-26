@@ -37,6 +37,28 @@ object UserModel {
     findBy(fr"WHERE login_lowercase = $loginLoweCase")
   }
 
+  def updatePassword(id: UserId, password: String): ConnectionIO[Unit] = {
+    sql"""
+         UPDATE users
+            SET
+                password = $password
+         WHERE id = $id
+       """.update.run.void
+  }
+
+  def update(user: User): ConnectionIO[Unit] = {
+    import user._
+    sql"""
+         UPDATE users
+            SET
+                email_lowercase = $emailLowercase,
+                login_lowercase = $loginLowercase,
+                login = ${user.login},
+                password = $password,
+                role = $role
+       """.update.run.void
+  }
+
   private def findBy(where: Fragment): ConnectionIO[Option[User]] = {
     (fr"""
         SELECT id, account_id, login, "role", email_lowercase, login_lowercase, password, created_on
@@ -60,6 +82,17 @@ case class User(
 object User {
   import com.github.t3hnar.bcrypt._
   type UserId = Id @@ User
+
+  def patch(user: User, request: UserPatchRequest): User = {
+    val emailLowercase = request.email.fold(user.emailLowercase)(_.trim.toLowerCase)
+    val login          = request.login.fold(user.loginLowercase)(_.trim)
+    val loginLowerCase = request.login.fold(user.loginLowercase)(_.trim.toLowerCase)
+    user.copy(
+      login = login,
+      loginLowercase = loginLowerCase,
+      emailLowercase = emailLowercase
+    )
+  }
 
   def hash(password: String): String = {
     password.bcryptBounded(11)
