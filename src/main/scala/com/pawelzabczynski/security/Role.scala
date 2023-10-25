@@ -18,8 +18,10 @@ object Role {
   }
 
   trait RoleJsonSupport {
-    implicit val roleEncoder: Encoder[Role] = Encoder.instance(v => Json.fromString(v.toString))
-    implicit val roleDecoder: Decoder[Role] = Decoder.instance(_.as[String].map(from))
+    implicit val roleEncoder: Encoder[Role] =
+      Encoder.instance(v => Json.fromString(v.toString))
+    implicit val roleDecoder: Decoder[Role] =
+      Decoder.instance(_.as[String].map(from))
   }
 
   trait RoleDoobieSupport {

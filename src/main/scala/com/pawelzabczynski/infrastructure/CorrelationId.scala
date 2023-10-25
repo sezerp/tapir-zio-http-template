@@ -1,9 +1,13 @@
 package com.pawelzabczynski.infrastructure
 
-import com.pawelzabczynski.infrastructure.ZIOLogger.MdcKey
 import CorrelationId.generateZIO
 import sttp.tapir.model.ServerRequest
-import sttp.tapir.server.interceptor.{EndpointInterceptor, RequestHandler, RequestInterceptor, Responder}
+import sttp.tapir.server.interceptor.{
+  EndpointInterceptor,
+  RequestHandler,
+  RequestInterceptor,
+  Responder
+}
 import zio.{Task, Trace, UIO, ZIO, ZIOAspect}
 
 object CorrelationId {
@@ -29,7 +33,10 @@ object CorrelationId {
 }
 
 object LogAspect {
-  val HeaderName: String = "X-Correlation-ID"
+  object MdcKey {
+    val CorrelationId = "correlation_id"
+  }
+  private val HeaderName: String = "X-Correlation-ID"
 
   def logAnnotateCorrelationId(
       request: ServerRequest
@@ -38,7 +45,9 @@ object LogAspect {
       override def apply[R, E, A](
           zio: ZIO[R, E, A]
       )(implicit trace: Trace): ZIO[R, E, A] =
-        getCorrelationId(request).flatMap(id => ZIO.logAnnotate(MdcKey.CorrelationId, id)(zio))
+        getCorrelationId(request).flatMap(id =>
+          ZIO.logAnnotate(MdcKey.CorrelationId, id)(zio)
+        )
 
       def getCorrelationId(req: ServerRequest): UIO[String] = {
         req
@@ -52,7 +61,10 @@ object CorrelationIdInterceptor extends RequestInterceptor[Task] {
   override def apply[R, B](
       responder: Responder[Task, B],
       requestHandler: EndpointInterceptor[Task] => RequestHandler[Task, R, B]
-  ): RequestHandler[Task, R, B] = RequestHandler.from { case (request, endpoints, monad) =>
-    requestHandler(EndpointInterceptor.noop)(request, endpoints)(monad) @@ LogAspect.logAnnotateCorrelationId(request)
+  ): RequestHandler[Task, R, B] = RequestHandler.from {
+    case (request, endpoints, monad) =>
+      requestHandler(EndpointInterceptor.noop)(request, endpoints)(
+        monad
+      ) @@ LogAspect.logAnnotateCorrelationId(request)
   }
 }

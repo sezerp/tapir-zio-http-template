@@ -29,7 +29,9 @@ class UserService(
     clock: Clock,
     xa: Transactor[Task]
 ) {
-  def register(data: UserRegisterRequest): IO[UserServiceError, UserRegistration] = {
+  def register(
+      data: UserRegisterRequest
+  ): IO[UserServiceError, UserRegistration] = {
     val transaction = for {
       account <- accountService.crate(data.accountName)
       user    <- createUser(data, account.id)
@@ -41,7 +43,12 @@ class UserService(
       validateUserPasswordLength(data.password) *>
       transaction
         .transact(xa)
-        .tapError(e => ZIO.logErrorCause("Error occurred when try register new user", e.toCause))
+        .tapError(e =>
+          ZIO.logErrorCause(
+            "Error occurred when try register new user",
+            e.toCause
+          )
+        )
         .mapError(_ => UserServiceInternalError)
   }
 
@@ -50,19 +57,32 @@ class UserService(
       maybeUser <- UserModel
         .login(request.loginOrEmail)
         .transact(xa)
-        .tapError(e => ZIO.logErrorCause(s"Error occurred when try find user ${request.loginOrEmail}.", e.toCause))
+        .tapError(e =>
+          ZIO.logErrorCause(
+            s"Error occurred when try find user ${request.loginOrEmail}.",
+            e.toCause
+          )
+        )
         .mapError(_ => UserServiceInternalError)
       user <- ZIO.getOrFailWith(IncorrectAuthData)(maybeUser)
       _    <- verifyPassword(user, request.password)
       apiKey <- apiKeyService
         .create(user.id)
         .transact(xa)
-        .tapError(e => ZIO.logErrorCause(s"Error occurred when try generate api key.", e.toCause))
+        .tapError(e =>
+          ZIO.logErrorCause(
+            s"Error occurred when try generate api key.",
+            e.toCause
+          )
+        )
         .mapError(_ => UserServiceInternalError)
     } yield apiKey
   }
 
-  def changePassword(user: User, request: UserChangePasswordRequest): IO[UserServiceError, Unit] = {
+  def changePassword(
+      user: User,
+      request: UserChangePasswordRequest
+  ): IO[UserServiceError, Unit] = {
     for {
       _ <- verifyPassword(user, request.currentPassword)
       _ <- validateUserPasswordLength(request.newPassword)
@@ -70,49 +90,92 @@ class UserService(
       _ <- UserModel
         .updatePassword(user.id, pwHash)
         .transact(xa)
-        .tapError(e => ZIO.logErrorCause(s"Error occurred when try generate api key.", e.toCause))
+        .tapError(e =>
+          ZIO.logErrorCause(
+            s"Error occurred when try generate api key.",
+            e.toCause
+          )
+        )
         .mapError(_ => UserServiceInternalError)
     } yield ()
   }
 
-  def patchUser(user: User, request: UserPatchRequest): IO[UserServiceError, Unit] = {
+  def patchUser(
+      user: User,
+      request: UserPatchRequest
+  ): IO[UserServiceError, Unit] = {
     (for {
       updatedUser <- User.patch(user, request).pure[ConnectionIO]
       _           <- UserModel.update(updatedUser)
     } yield ())
       .transact(xa)
-      .tapError(e => ZIO.logErrorCause(s"Error occurred when try patch user entity.", e.toCause))
+      .tapError(e =>
+        ZIO.logErrorCause(
+          s"Error occurred when try patch user entity.",
+          e.toCause
+        )
+      )
       .mapError(_ => UserServiceInternalError)
   }
 
-  private def verifyPassword(user: User, pw: String): IO[UserServiceError, Unit] = {
+  private def verifyPassword(
+      user: User,
+      pw: String
+  ): IO[UserServiceError, Unit] = {
     if (User.verifyPw(pw, user.password)) ZIO.unit
     else ZIO.fail(IncorrectAuthData)
   }
 
-  private def validateUserPasswordLength(pw: String): IO[UserServiceError, Unit] = {
+  private def validateUserPasswordLength(
+      pw: String
+  ): IO[UserServiceError, Unit] = {
     if (pw.length >= config.minPasswordLength) ZIO.unit
-    else ZIO.fail(RegistrationError(s"The min password length is ${config.minPasswordLength}."))
+    else
+      ZIO.fail(
+        RegistrationError(
+          s"The min password length is ${config.minPasswordLength}."
+        )
+      )
   }
 
-  private def checkIfUserExist(login: String, email: String): IO[UserServiceError, Unit] = {
+  private def checkIfUserExist(
+      login: String,
+      email: String
+  ): IO[UserServiceError, Unit] = {
     for {
       maybeByEmailUser <- UserModel
         .findByEmail(email)
         .transact(xa)
-        .tapError(e => ZIO.logErrorCause(s"Error occurred when check if user exist by email", e.toCause))
+        .tapError(e =>
+          ZIO.logErrorCause(
+            s"Error occurred when check if user exist by email",
+            e.toCause
+          )
+        )
         .mapError(_ => UserServiceInternalError)
-      _ <- ZIO.noneOrFailWith(maybeByEmailUser)(_ => RegistrationError("Email already exists."))
+      _ <- ZIO.noneOrFailWith(maybeByEmailUser)(_ =>
+        RegistrationError("Email already exists.")
+      )
       maybeByLoginUser <- UserModel
         .findByLogin(login)
         .transact(xa)
-        .tapError(e => ZIO.logErrorCause("Error occurred when check user exist by login", e.toCause))
+        .tapError(e =>
+          ZIO.logErrorCause(
+            "Error occurred when check user exist by login",
+            e.toCause
+          )
+        )
         .mapError(_ => UserServiceInternalError)
-      _ <- ZIO.noneOrFailWith(maybeByLoginUser)(_ => RegistrationError("Login already exists."))
+      _ <- ZIO.noneOrFailWith(maybeByLoginUser)(_ =>
+        RegistrationError("Login already exists.")
+      )
     } yield ()
   }
 
-  private def createUser(data: UserRegisterRequest, accountId: AccountId): ConnectionIO[User] = {
+  private def createUser(
+      data: UserRegisterRequest,
+      accountId: AccountId
+  ): ConnectionIO[User] = {
     for {
       userId <- idGenerator.next[ConnectionIO, User]
       ts     <- clock.now[ConnectionIO]
@@ -131,7 +194,12 @@ class UserService(
 }
 
 object UserService {
-  type Env = Config with AccountService with ApiKeyService with IdGenerator with Clock with Transactor[Task]
+  type Env = Config
+    with AccountService
+    with ApiKeyService
+    with IdGenerator
+    with Clock
+    with Transactor[Task]
 
   case class UserRegistration(user: User, account: Account, apiKey: ApiKey)
 
@@ -143,7 +211,14 @@ object UserService {
       clock: Clock,
       xa: Transactor[Task]
   ): UserService = {
-    new UserService(config.userService, accountService, apiKeyService, idGenerator, clock, xa)
+    new UserService(
+      config.userService,
+      accountService,
+      apiKeyService,
+      idGenerator,
+      clock,
+      xa
+    )
   }
 
   sealed trait UserServiceError

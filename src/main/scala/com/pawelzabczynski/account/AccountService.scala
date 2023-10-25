@@ -20,5 +20,6 @@ object AccountService {
     new AccountService(idGenerator, clock)
   }
 
-  val live: URLayer[IdGenerator with Clock, AccountService] = ZLayer.fromFunction(unsafeCreate _)
+  val live: URLayer[IdGenerator with Clock, AccountService] =
+    ZLayer.fromFunction(unsafeCreate _)
 }

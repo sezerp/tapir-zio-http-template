@@ -12,14 +12,16 @@ trait TestSupport {
     def get: R = {
       e match {
         case Right(b) => b
-        case Left(l)  => throw new NoSuchElementException(s"Either.right.get on Right, $l")
+        case Left(l) =>
+          throw new NoSuchElementException(s"Either.right.get on Right, $l")
       }
     }
 
     def getLeft: L = {
       e match {
-        case Left(e)  => e
-        case Right(r) => throw new NoSuchElementException(s"Either.left.get on Left, $r")
+        case Left(e) => e
+        case Right(r) =>
+          throw new NoSuchElementException(s"Either.left.get on Left, $r")
       }
     }
   }

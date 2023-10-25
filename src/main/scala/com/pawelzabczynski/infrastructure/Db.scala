@@ -30,14 +30,19 @@ class Db(config: DbConfig, xa: Transactor[Task]) {
       .transact(xa)
       .unit
       .catchSome { case e: Exception =>
-        ZIO.logWarningCause("Database not available, waiting 5 seconds to retry...", e.toCause) *> ZIO.sleep(
+        ZIO.logWarningCause(
+          "Database not available, waiting 5 seconds to retry...",
+          e.toCause
+        ) *> ZIO.sleep(
           5.second
         ) *> testConnection(xa)
       }
   }
 
   def checkAndMigrate(): Task[Unit] = {
-    testConnection(xa) *> migrate() *> ZIO.logInfo("Database connection check and migration completed.")
+    testConnection(xa) *> migrate() *> ZIO.logInfo(
+      "Database connection check and migration completed."
+    )
   }
 }
 
@@ -53,9 +58,13 @@ object Db {
 }
 
 object DbTransactor {
-  private def transactorResources(config: DbConfig): Resource[Task, HikariTransactor[Task]] = {
+  private def transactorResources(
+      config: DbConfig
+  ): Resource[Task, HikariTransactor[Task]] = {
     for {
-      ec <- ExecutionContexts.fixedThreadPool[Task](config.connectThreadPoolSize)
+      ec <- ExecutionContexts.fixedThreadPool[Task](
+        config.connectThreadPoolSize
+      )
       xa <- HikariTransactor.newHikariTransactor[Task](
         config.driver,
         config.url,
@@ -66,10 +75,12 @@ object DbTransactor {
     } yield xa
   }
 
-  private def transactorScoped: ZIO[DbConfig with Scope, Throwable, HikariTransactor[Task]] = for {
+  private def transactorScoped
+      : ZIO[DbConfig with Scope, Throwable, HikariTransactor[Task]] = for {
     config <- ZIO.service[DbConfig]
     xa     <- transactorResources(config).toScopedZIO
   } yield xa
 
-  val live: ZLayer[DbConfig with Scope, Throwable, HikariTransactor[Task]] = ZLayer.fromZIO(transactorScoped)
+  val live: ZLayer[DbConfig with Scope, Throwable, HikariTransactor[Task]] =
+    ZLayer.fromZIO(transactorScoped)
 }

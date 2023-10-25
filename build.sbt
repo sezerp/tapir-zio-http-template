@@ -19,7 +19,7 @@ lazy val buildInfoSettings = Seq(
     scalaVersion,
     sbtVersion,
     action("lastCommitHash") {
-      import scala.sys.process._
+      import scala.sys.process.*
       // if the build is done outside of a git repository, we still want it to succeed
       Try("git rev-parse HEAD".!!.trim).getOrElse("?")
     }
@@ -33,7 +33,7 @@ lazy val buildInfoSettings = Seq(
 lazy val root = (project in file("."))
   .settings(
       name := "tapir-zio-http-template",
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.13.12",
     libraryDependencies ++= allDeps,
     scalacOptions ++= scalaCopts
   )

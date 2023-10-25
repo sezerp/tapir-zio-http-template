@@ -23,7 +23,9 @@ package object test {
         .unsafe { implicit unsafe =>
           zio.Runtime.default.unsafe
             .run(
-              t.timeoutFail(new RuntimeException("The given task exceed timeout"))(timeout)
+              t.timeoutFail(
+                new RuntimeException("The given task exceed timeout")
+              )(timeout)
                 .tapError(e => ZIO.succeed(e.printStackTrace()))
             )
             .getOrThrowFiberFailure()

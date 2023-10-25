@@ -12,9 +12,11 @@ import java.time.Instant
 class ApiKeyAuthOps extends AuthOps[ApiKey] {
   override def tokenName: String = "ApiKeyAuth"
 
-  override def findById(id: Id @@ ApiKey): ConnectionIO[Option[ApiKey]] = ApiKeyModel.findById(id)
+  override def findById(id: Id @@ ApiKey): ConnectionIO[Option[ApiKey]] =
+    ApiKeyModel.findById(id)
 
-  override def delete(token: ApiKey): ConnectionIO[Unit] = ApiKeyModel.delete(token.id)
+  override def delete(token: ApiKey): ConnectionIO[Unit] =
+    ApiKeyModel.delete(token.id)
 
   override def userId(token: ApiKey): UserId = token.userId
 

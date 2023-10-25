@@ -4,7 +4,14 @@ import com.pawelzabczynski.Fail
 import com.pawelzabczynski.infrastructure.JsonSupport._
 import Fail.{IncorrectInput, Unauthorized}
 import com.pawelzabczynski.util.{Id, idDecoder}
-import sttp.tapir.{Codec, Endpoint, EndpointOutput, PublicEndpoint, Schema, Tapir}
+import sttp.tapir.{
+  Codec,
+  Endpoint,
+  EndpointOutput,
+  PublicEndpoint,
+  Schema,
+  Tapir
+}
 import sttp.tapir.json.circe.TapirJsonCirce
 import io.circe.Printer
 import sttp.model.StatusCode
@@ -14,16 +21,20 @@ import zio.{Task, ZIO, ZLayer}
 import com.softwaremill.tagging._
 
 class Http() extends Tapir with TapirJsonCirce with TapirSchemas {
-  val jsonErrorOutOutput: EndpointOutput[ErrorOut]                          = jsonBody[ErrorOut]
-  val failOutput: EndpointOutput[(StatusCode, ErrorOut)]                    = statusCode.and(jsonErrorOutOutput)
-  val baseEndpoint: PublicEndpoint[Unit, (StatusCode, ErrorOut), Unit, Any] = endpoint.errorOut(failOutput)
+  val jsonErrorOutOutput: EndpointOutput[ErrorOut] = jsonBody[ErrorOut]
+  val failOutput: EndpointOutput[(StatusCode, ErrorOut)] =
+    statusCode.and(jsonErrorOutOutput)
+  val baseEndpoint: PublicEndpoint[Unit, (StatusCode, ErrorOut), Unit, Any] =
+    endpoint.errorOut(failOutput)
   val secureEndpoint: Endpoint[Id, Unit, (StatusCode, ErrorOut), Unit, Any] =
-    baseEndpoint.securityIn(auth.bearer[String]().mapDecode[Id](idDecoder)(_.toString))
+    baseEndpoint.securityIn(
+      auth.bearer[String]().mapDecode[Id](idDecoder)(_.toString)
+    )
 
   private val failToResponseData: Fail => (StatusCode, String) = {
     case IncorrectInput(msg) => (StatusCode.BadRequest, msg)
     case Unauthorized        => (StatusCode.Unauthorized, "Unauthorized")
-    case _                   => (StatusCode.InternalServerError, "Internal server error")
+    case _ => (StatusCode.InternalServerError, "Internal server error")
   }
 
   override def jsonPrinter: Printer = noNullsPrinter
@@ -47,11 +58,16 @@ object Http {
 }
 
 trait TapirSchemas {
-  implicit val idPlainCodec: PlainCodec[Id] = Codec.uuid.map(_.asInstanceOf[Id])(identity)
-  implicit def taggedPlainCodec[U, T](implicit uc: PlainCodec[U]): PlainCodec[U @@ T] =
+  implicit val idPlainCodec: PlainCodec[Id] =
+    Codec.uuid.map(_.asInstanceOf[Id])(identity)
+  implicit def taggedPlainCodec[U, T](implicit
+      uc: PlainCodec[U]
+  ): PlainCodec[U @@ T] =
     uc.map(_.taggedWith[T])(identity)
 
-  implicit val schemaForId: Schema[Id] = Schema.schemaForUUID.asInstanceOf[Schema[Id]]
+  implicit val schemaForId: Schema[Id] =
+    Schema.schemaForUUID.asInstanceOf[Schema[Id]]
 
-  implicit def schemaForTagged[T]: Schema[Id @@ T] = schemaForId.asInstanceOf[Schema[Id @@ T]]
+  implicit def schemaForTagged[T]: Schema[Id @@ T] =
+    schemaForId.asInstanceOf[Schema[Id @@ T]]
 }
