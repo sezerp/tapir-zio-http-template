@@ -19,7 +19,10 @@ object Doobie
     with RoleDoobieSupport
     with StrictLogging {
 
-  implicit def idType: Meta[Id]                   = Meta.Advanced.other[UUID]("uuid").asInstanceOf[Meta[Id]]
-  implicit def taggedUUIDType[U]: Meta[UUID @@ U] = Meta.Advanced.other[UUID]("uuid").asInstanceOf[Meta[UUID @@ U]]
-  implicit def taggedIdType[U]: Meta[Id @@ U]     = Meta.Advanced.other[UUID]("uuid").asInstanceOf[Meta[Id @@ U]]
+  implicit def idType: Meta[Id] =
+    Meta.Advanced.other[UUID]("uuid").asInstanceOf[Meta[Id]]
+  implicit def taggedUUIDType[U]: Meta[UUID @@ U] =
+    Meta.Advanced.other[UUID]("uuid").asInstanceOf[Meta[UUID @@ U]]
+  implicit def taggedIdType[U]: Meta[Id @@ U] =
+    Meta.Advanced.other[UUID]("uuid").asInstanceOf[Meta[Id @@ U]]
 }

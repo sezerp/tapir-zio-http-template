@@ -15,7 +15,8 @@ trait Clock {
 class DefaultClock extends Clock {
   private val clock: java.time.Clock = java.time.Clock.systemUTC()
 
-  override def unsafeNow: Instant = clock.instant().truncatedTo(ChronoUnit.MILLIS)
+  override def unsafeNow: Instant =
+    clock.instant().truncatedTo(ChronoUnit.MILLIS)
 }
 
 object Clock {

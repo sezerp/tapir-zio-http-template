@@ -19,10 +19,12 @@ class TestDb(config: DbConfig) extends StrictLogging {
 
   {
     val (ds, transactor) = (for {
-      ec        <- ZIO.attempt(Executors.newFixedThreadPool(config.connectThreadPoolSize))
+      ec <- ZIO.attempt(
+        Executors.newFixedThreadPool(config.connectThreadPoolSize)
+      )
       connectEC <- ZIO.attempt(ExecutionContext.fromExecutor(ec))
-      _         <- ZIO.attempt(Class.forName(config.driver)) // check if driver exist
-      ds        <- ZIO.attempt(new HikariDataSource)
+      _  <- ZIO.attempt(Class.forName(config.driver)) // check if driver exist
+      ds <- ZIO.attempt(new HikariDataSource)
       _ <- ZIO.attempt {
         ds.setDriverClassName(config.driver)
         ds.setJdbcUrl(config.url)
@@ -63,7 +65,12 @@ class TestDb(config: DbConfig) extends StrictLogging {
       .unique
       .transact(xa)
       .unit
-      .tapError(e => ZIO.logErrorCause("Exception occurred when try test DB connection", Cause.fail(e))) *> ZIO.logInfo(
+      .tapError(e =>
+        ZIO.logErrorCause(
+          "Exception occurred when try test DB connection",
+          Cause.fail(e)
+        )
+      ) *> ZIO.logInfo(
       "Test DB successful."
     )).runUnsafe(1.minute)
   }

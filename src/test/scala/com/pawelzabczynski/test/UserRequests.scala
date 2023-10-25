@@ -1,6 +1,11 @@
 package com.pawelzabczynski.test
 
-import com.pawelzabczynski.user.{UserLoginRequest, UserPatchRequest, UserRegisterRequest, UserRegisterResponse}
+import com.pawelzabczynski.user.{
+  UserLoginRequest,
+  UserPatchRequest,
+  UserRegisterRequest,
+  UserRegisterResponse
+}
 import com.pawelzabczynski.infrastructure.JsonSupport._
 import com.pawelzabczynski.security.apiKey.ApiKey.ApiKeyId
 import io.circe.syntax.EncoderOps
@@ -17,12 +22,15 @@ trait UserRequests { self: TestRequestSupport with TestSupport =>
     val password    = UUID.randomUUID().toString
     val accountName = s"account-${UUID.randomUUID()}"
     val entity      = UserRegisterRequest(accountName, login, email, password)
-    val response    = userRegister(entity).body.shouldDeserializeTo[UserRegisterResponse]
+    val response =
+      userRegister(entity).body.shouldDeserializeTo[UserRegisterResponse]
 
     CreateUserResult(email, login, password, response.apiKey)
   }
 
-  def userRegister(entity: UserRegisterRequest): Response[Either[String, String]] = {
+  def userRegister(
+      entity: UserRegisterRequest
+  ): Response[Either[String, String]] = {
     basicRequest
       .post(uri"$basePath/user/register")
       .body(entity.asJson.noSpaces)
@@ -54,7 +62,10 @@ trait UserRequests { self: TestRequestSupport with TestSupport =>
       .runUnsafe()
   }
 
-  def userPatch(entity: UserPatchRequest, apiKey: ApiKeyId): Response[Either[String, String]] = {
+  def userPatch(
+      entity: UserPatchRequest,
+      apiKey: ApiKeyId
+  ): Response[Either[String, String]] = {
     basicRequest
       .patch(uri"$basePath/user")
       .header("Authorization", s"Bearer $apiKey")
@@ -64,4 +75,9 @@ trait UserRequests { self: TestRequestSupport with TestSupport =>
   }
 }
 
-final case class CreateUserResult(email: String, login: String, password: String, apiKey: ApiKeyId)
+final case class CreateUserResult(
+    email: String,
+    login: String,
+    password: String,
+    apiKey: ApiKeyId
+)

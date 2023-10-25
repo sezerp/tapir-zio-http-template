@@ -7,5 +7,6 @@ class Requests(override val backend: SttpBackend[Task, Any])
     extends TestRequestSupport
     with TestSupport
     with UserRequests {
-  override protected val basePath: String = s"http://localhost:${TestConfig.api.port}/api/v1"
+  override protected val basePath: String =
+    s"http://localhost:${TestConfig.api.port}/api/v1"
 }

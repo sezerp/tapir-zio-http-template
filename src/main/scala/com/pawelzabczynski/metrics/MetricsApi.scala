@@ -22,7 +22,9 @@ class MetricsApi(http: Http, registry: CollectorRegistry) {
           TextFormat.write004(w, registry.metricFamilySamples())
           w.toString
         }
-        .tapError(e => ZIO.logErrorCause("Error occurred when scrap metrics", e.toCause))
+        .tapError(e =>
+          ZIO.logErrorCause("Error occurred when scrap metrics", e.toCause)
+        )
         .toTaskEither
     }
 

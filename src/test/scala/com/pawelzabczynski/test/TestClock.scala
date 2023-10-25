@@ -13,7 +13,8 @@ object TestClock extends Clock {
 
   override def unsafeNow: Instant = {
     val currentOffset = offset.get()
-    if (currentOffset.toMillis >= 0) clock.instant().plusMillis(currentOffset.toMillis)
+    if (currentOffset.toMillis >= 0)
+      clock.instant().plusMillis(currentOffset.toMillis)
     else clock.instant().minusMillis(-currentOffset.toMillis)
   }
 

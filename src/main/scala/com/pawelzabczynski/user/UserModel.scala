@@ -20,7 +20,9 @@ object UserModel {
 
   def login(emailOrLogin: String): ConnectionIO[Option[User]] = {
     val emailOrLoginLowercase = emailOrLogin.toLowerCase
-    findBy(fr"WHERE email_lowercase = $emailOrLoginLowercase OR login_lowercase = $emailOrLoginLowercase")
+    findBy(
+      fr"WHERE email_lowercase = $emailOrLoginLowercase OR login_lowercase = $emailOrLoginLowercase"
+    )
   }
 
   def findById(id: UserId): ConnectionIO[Option[User]] = {
@@ -84,9 +86,11 @@ object User {
   type UserId = Id @@ User
 
   def patch(user: User, request: UserPatchRequest): User = {
-    val emailLowercase = request.email.fold(user.emailLowercase)(_.trim.toLowerCase)
-    val login          = request.login.fold(user.loginLowercase)(_.trim)
-    val loginLowerCase = request.login.fold(user.loginLowercase)(_.trim.toLowerCase)
+    val emailLowercase =
+      request.email.fold(user.emailLowercase)(_.trim.toLowerCase)
+    val login = request.login.fold(user.loginLowercase)(_.trim)
+    val loginLowerCase =
+      request.login.fold(user.loginLowercase)(_.trim.toLowerCase)
     user.copy(
       login = login,
       loginLowercase = loginLowerCase,

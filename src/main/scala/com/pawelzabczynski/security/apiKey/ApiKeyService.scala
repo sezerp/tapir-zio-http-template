@@ -31,5 +31,6 @@ object ApiKeyService {
     new ApiKeyService(idGenerator, clock)
   }
 
-  val live: URLayer[IdGenerator with Clock, ApiKeyService] = ZLayer.fromFunction(unsafeCreate _)
+  val live: URLayer[IdGenerator with Clock, ApiKeyService] =
+    ZLayer.fromFunction(unsafeCreate _)
 }

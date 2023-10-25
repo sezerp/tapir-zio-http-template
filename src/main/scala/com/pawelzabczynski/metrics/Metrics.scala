@@ -19,5 +19,6 @@ object Metrics {
       .register()
   }
 
-  val live: ULayer[CollectorRegistry] = ZLayer.succeed(CollectorRegistry.defaultRegistry)
+  val live: ULayer[CollectorRegistry] =
+    ZLayer.succeed(CollectorRegistry.defaultRegistry)
 }

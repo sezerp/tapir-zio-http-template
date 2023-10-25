@@ -15,7 +15,8 @@ package object util {
   def idDecoder(v: String): DecodeResult[Id] = {
     Try(UUID.fromString(v)) match {
       case Success(id) => DecodeResult.Value(id.asInstanceOf[Id])
-      case Failure(_)  => DecodeResult.Error(v, new RuntimeException(s"Invalid api key format."))
+      case Failure(_) =>
+        DecodeResult.Error(v, new RuntimeException(s"Invalid api key format."))
     }
   }
 

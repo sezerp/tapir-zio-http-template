@@ -6,7 +6,8 @@ import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import org.postgresql.jdbc.PgConnection
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 
-trait TestEmbeddedPostgres extends BeforeAndAfterEach with BeforeAndAfterAll { self: Suite =>
+trait TestEmbeddedPostgres extends BeforeAndAfterEach with BeforeAndAfterAll {
+  self: Suite =>
   private var postgres: EmbeddedPostgres = _
   private var currentDbConfig: DbConfig  = _
   var currentDb: TestDb                  = _
@@ -15,7 +16,11 @@ trait TestEmbeddedPostgres extends BeforeAndAfterEach with BeforeAndAfterAll { s
     super.beforeAll()
     postgres = EmbeddedPostgres.builder().start()
     val url = postgres.getJdbcUrl("postgres", "postgres")
-    postgres.getPostgresDatabase().getConnection.asInstanceOf[PgConnection].setPrepareThreshold(100)
+    postgres
+      .getPostgresDatabase()
+      .getConnection
+      .asInstanceOf[PgConnection]
+      .setPrepareThreshold(100)
     currentDbConfig = TestConfig.db.copy(
       username = "postgres",
       password = Sensitive(""),

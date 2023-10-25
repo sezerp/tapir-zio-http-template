@@ -8,11 +8,11 @@ import com.pawelzabczynski.metrics.{Metrics, MetricsApi}
 import com.pawelzabczynski.security.apiKey.{ApiKeyAuthOps, ApiKeyService}
 import com.pawelzabczynski.security.auth.Auth
 import com.pawelzabczynski.user.{UserApi, UserService}
-import com.pawelzabczynski.util.{Clock, ErrorOps, IdGenerator}
+import com.pawelzabczynski.util.{Clock, IdGenerator}
 import com.typesafe.scalalogging.StrictLogging
 import io.prometheus.client.CollectorRegistry
 import zio.logging.backend.SLF4J
-import zio.{Scope, ZIO, ZIOAppArgs, ZIOAppDefault, ZIOAspect, ZLayer}
+import zio.{Scope, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
 
 object Application extends ZIOAppDefault with StrictLogging {
 

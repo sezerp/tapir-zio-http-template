@@ -22,14 +22,21 @@ import org.http4s.server.middleware.Metrics
 
 import scala.concurrent.ExecutionContext
 
-class HttpApi(http: Http, endpoints: HttpEndpoints, config: HttpConfig, collectorRegistry: CollectorRegistry)
-    extends StrictLogging {
+class HttpApi(
+    http: Http,
+    endpoints: HttpEndpoints,
+    config: HttpConfig,
+    collectorRegistry: CollectorRegistry
+) extends StrictLogging {
   private val apiContextPath = List("api", "v1")
 
   val serverOptions: Http4sServerOptions[Task] = Http4sServerOptions
     .customiseInterceptors[Task]
     .prependInterceptor(CorrelationIdInterceptor)
-    .defaultHandlers(msg => ValuedEndpointOutput(http.jsonErrorOutOutput, ErrorOut(msg)), notFoundWhenRejected = true)
+    .defaultHandlers(
+      msg => ValuedEndpointOutput(http.jsonErrorOutOutput, ErrorOut(msg)),
+      notFoundWhenRejected = true
+    )
     .corsInterceptor(CORSInterceptor.default[Task])
     .serverLog {
       Http4sServerOptions
@@ -43,7 +50,9 @@ class HttpApi(http: Http, endpoints: HttpEndpoints, config: HttpConfig, collecto
 
   lazy val allEndpoints: List[ServerEndpoint[Any, Task]] = {
     val docsEndpoints =
-      SwaggerInterpreter(swaggerUIOptions = SwaggerUIOptions.default.copy(contextPath = apiContextPath))
+      SwaggerInterpreter(swaggerUIOptions =
+        SwaggerUIOptions.default.copy(contextPath = apiContextPath)
+      )
         .fromServerEndpoints(endpoints, "Tapir-Zio-Http", "1.0")
 
     val apiEndpoints = (endpoints ++ docsEndpoints).map { se =>
@@ -53,9 +62,12 @@ class HttpApi(http: Http, endpoints: HttpEndpoints, config: HttpConfig, collecto
     apiEndpoints
   }
 
-  lazy val routes: HttpRoutes[Task] = Http4sServerInterpreter(serverOptions).toRoutes(allEndpoints)
+  lazy val routes: HttpRoutes[Task] =
+    Http4sServerInterpreter(serverOptions).toRoutes(allEndpoints)
 
-  def resources(ex: ExecutionContext): Resource[Task, org.http4s.server.Server] = {
+  def resources(
+      ex: ExecutionContext
+  ): Resource[Task, org.http4s.server.Server] = {
     Prometheus
       .metricsOps[Task](collectorRegistry)
       .map(m => Metrics[Task](m)(routes))
@@ -68,9 +80,14 @@ class HttpApi(http: Http, endpoints: HttpEndpoints, config: HttpConfig, collecto
       }
   }
 
-  def scoped(ex: ExecutionContext): ZIO[Scope, Throwable, Server] = resources(ex).toScopedZIO
+  def scoped(ex: ExecutionContext): ZIO[Scope, Throwable, Server] = resources(
+    ex
+  ).toScopedZIO
 
-  private def logDebug(msg: String, maybeError: Option[Throwable]): UIO[Unit] = {
+  private def logDebug(
+      msg: String,
+      maybeError: Option[Throwable]
+  ): UIO[Unit] = {
     maybeError.fold(ZIO.logDebug(msg))(e => ZIO.logDebugCause(msg, e.toCause))
   }
 }
